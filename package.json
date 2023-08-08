@@ -3,8 +3,14 @@
   "version": "0.0.2",
   "type": "module",
   "exports": {
-    "./utils": "./dist/utils",
-    "./logger": "./dist/logger"
+    "./utils": {
+      "import": "./dist/utils.js",
+      "types": "./dist/utils.d.ts"
+    },
+    "./logger": {
+      "import": "./dist/logger.js",
+      "types": "./dist/logger.d.ts"
+    }
   },
   "scripts": {
     "dev": "vite",
