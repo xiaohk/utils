@@ -571,3 +571,24 @@ export const getNumCommonWords = (str1: string, str2: string) => {
   const words2 = new Set(str2.toLocaleLowerCase().split(' '));
   return words1.filter(w => words2.has(w)).length;
 };
+
+/**
+ * Splits an array into chunks of a specified size.
+ *
+ * @template T - The type of elements in the array.
+ * @param {T[]} array - The array to be split into chunks.
+ * @param {number} size - The size of each chunk.
+ * @returns {T[][]} - An array of chunks, where each chunk is an array of size `size`.
+ * @throws {Error} - If `size` is less than or equal to 0.
+ */
+export const chunk = <T>(array: T[], size: number): T[][] => {
+  if (size <= 0) throw new Error('Size must be greater than 0');
+
+  const result: T[][] = [];
+
+  for (let i = 0; i < array.length; i += size) {
+    result.push(array.slice(i, i + size));
+  }
+
+  return result;
+};
