@@ -15,7 +15,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc",
-    "publish": "npm version patch && npm publish --access public"
+    "distribute": "npm version patch && npm publish --access public"
   },
   "license": "MIT",
   "devDependencies": {
