@@ -5,7 +5,14 @@
  */
 
 import { randomLcg, randomUniform } from 'd3-random';
-import { computePosition, flip, shift, offset, arrow } from '@floating-ui/dom';
+import {
+  computePosition,
+  flip,
+  shift,
+  offset,
+  arrow,
+  hide
+} from '@floating-ui/dom';
 
 export interface TooltipConfig {
   tooltipElement: HTMLElement;
@@ -397,7 +404,8 @@ export const updatePopperTooltip = (
         offset(offsetAmount),
         flip(),
         shift(),
-        arrow({ element: arrowElement })
+        arrow({ element: arrowElement }),
+        hide()
       ]
     }).then(({ x, y, placement, middlewareData }) => {
       tooltip.style.left = `${x}px`;
@@ -415,15 +423,27 @@ export const updatePopperTooltip = (
       arrowElement.style.right = '';
       arrowElement.style.bottom = '';
       arrowElement.style[staticSide] = '-4px';
+
+      if (middlewareData.hide?.referenceHidden) {
+        tooltip.classList.add('hidden');
+      } else {
+        tooltip.classList.remove('hidden');
+      }
     });
   } else {
     arrowElement.classList.add('hidden');
     computePosition(anchor, tooltip, {
       placement: placement,
-      middleware: [offset(6), flip(), shift()]
-    }).then(({ x, y }) => {
+      middleware: [offset(6), flip(), shift(), hide()]
+    }).then(({ x, y, middlewareData }) => {
       tooltip.style.left = `${x}px`;
       tooltip.style.top = `${y}px`;
+
+      if (middlewareData.hide?.referenceHidden) {
+        tooltip.classList.add('hidden');
+      } else {
+        tooltip.classList.remove('hidden');
+      }
     });
   }
 };
