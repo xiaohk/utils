@@ -11,7 +11,8 @@ import {
   shift,
   offset,
   arrow,
-  hide
+  hide,
+  size
 } from '@floating-ui/dom';
 
 export interface TooltipConfig {
@@ -377,23 +378,23 @@ export const sleep = (n: number) => {
 };
 
 /**
- * Update the popper tooltip for the highlighted prompt point
- * @param tooltip Tooltip element
- * @param anchor Anchor point for the tooltip
- * @param point The prompt point
+ * Updates the position and appearance of a popper overlay tooltip.
+ * @param tooltip - The tooltip element.
+ * @param anchor - The anchor element to which the tooltip is attached.
+ * @param placement - The placement of the tooltip relative to the anchor
+ *  ('bottom', 'left', 'top', 'right').
+ * @param withArrow - Indicates whether the tooltip should have an arrow.
+ * @param offsetAmount - The offset amount in pixels.
+ * @param maxWidth - The maximum width of the tooltip in pixels (optional).
  */
 export const updatePopperTooltip = (
   tooltip: HTMLElement,
   anchor: HTMLElement,
-  text: string,
   placement: 'bottom' | 'left' | 'top' | 'right',
   withArrow: boolean,
-  offsetAmount = 8
+  offsetAmount = 8,
+  maxWidth?: number
 ) => {
-  const contentElement = tooltip.querySelector(
-    '.popper-content'
-  )! as HTMLElement;
-  contentElement.innerHTML = text;
   const arrowElement = tooltip.querySelector('.popper-arrow')! as HTMLElement;
 
   if (withArrow) {
@@ -403,55 +404,69 @@ export const updatePopperTooltip = (
       middleware: [
         offset(offsetAmount),
         flip(),
+        size({
+          apply({ availableWidth, elements }) {
+            if (maxWidth) {
+              Object.assign(elements.floating.style, {
+                maxWidth: `${Math.min(maxWidth, availableWidth)}px`
+              });
+            }
+          }
+        }),
         shift(),
         arrow({ element: arrowElement }),
         hide()
       ]
-    }).then(({ x, y, placement, middlewareData }) => {
-      tooltip.style.left = `${x}px`;
-      tooltip.style.top = `${y}px`;
+    })
+      .then(({ x, y, placement, middlewareData }) => {
+        tooltip.style.left = `${x}px`;
+        tooltip.style.top = `${y}px`;
 
-      const { x: arrowX, y: arrowY } = middlewareData.arrow!;
-      let staticSide: 'bottom' | 'left' | 'top' | 'right' = 'bottom';
-      if (placement.includes('top')) staticSide = 'bottom';
-      if (placement.includes('right')) staticSide = 'left';
-      if (placement.includes('bottom')) staticSide = 'top';
-      if (placement.includes('left')) staticSide = 'right';
+        const { x: arrowX, y: arrowY } = middlewareData.arrow!;
+        let staticSide: 'bottom' | 'left' | 'top' | 'right' = 'bottom';
+        if (placement.includes('top')) staticSide = 'bottom';
+        if (placement.includes('right')) staticSide = 'left';
+        if (placement.includes('bottom')) staticSide = 'top';
+        if (placement.includes('left')) staticSide = 'right';
 
-      arrowElement.style.left = arrowX ? `${arrowX}px` : '';
-      arrowElement.style.top = arrowY ? `${arrowY}px` : '';
-      arrowElement.style.right = '';
-      arrowElement.style.bottom = '';
-      arrowElement.style[staticSide] = '-4px';
+        tooltip.setAttribute('placement', placement);
 
-      if (middlewareData.hide?.referenceHidden) {
-        tooltip.classList.add('hidden');
-      } else {
-        tooltip.classList.remove('hidden');
-      }
-    });
+        arrowElement.style.left = arrowX ? `${arrowX}px` : '';
+        arrowElement.style.top = arrowY ? `${arrowY}px` : '';
+        arrowElement.style.right = '';
+        arrowElement.style.bottom = '';
+        arrowElement.style[staticSide] = '-4px';
+
+        if (middlewareData.hide?.referenceHidden) {
+          tooltip.classList.add('no-show');
+        } else {
+          tooltip.classList.remove('no-show');
+        }
+      })
+      .catch(() => {});
   } else {
     arrowElement.classList.add('hidden');
     computePosition(anchor, tooltip, {
       placement: placement,
       middleware: [offset(6), flip(), shift(), hide()]
-    }).then(({ x, y, middlewareData }) => {
-      tooltip.style.left = `${x}px`;
-      tooltip.style.top = `${y}px`;
+    })
+      .then(({ x, y, middlewareData }) => {
+        tooltip.style.left = `${x}px`;
+        tooltip.style.top = `${y}px`;
 
-      if (middlewareData.hide?.referenceHidden) {
-        tooltip.classList.add('hidden');
-      } else {
-        tooltip.classList.remove('hidden');
-      }
-    });
+        if (middlewareData.hide?.referenceHidden) {
+          tooltip.classList.add('hidden');
+        } else {
+          tooltip.classList.remove('hidden');
+        }
+      })
+      .catch(() => {});
   }
 };
 
 /**
  * Show a tooltip
  * @param e Trigger event
- * @param name The tooltip content
  * @param position Tooltip position
  * @param tooltip Tooltip config
  * @param delay Display animation delay
@@ -459,7 +474,6 @@ export const updatePopperTooltip = (
  */
 export const tooltipMouseEnter = (
   e: Event,
-  name: string,
   position: 'bottom' | 'left' | 'top' | 'right',
   tooltip: TooltipConfig | null,
   delay = 500,
@@ -485,7 +499,6 @@ export const tooltipMouseEnter = (
         updatePopperTooltip(
           tooltip!.tooltipElement,
           curTarget,
-          name,
           position,
           true,
           offsetAmount
@@ -503,7 +516,6 @@ export const tooltipMouseEnter = (
       updatePopperTooltip(
         tooltip!.tooltipElement,
         curTarget,
-        name,
         position,
         true,
         offsetAmount
